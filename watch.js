@@ -2,6 +2,7 @@ var Leap = require('leapjs');
 var Five = require('johnny-five');
 var io = require('socket.io');
 var http = require('http');
+var handwriting = require('./handwriting');
 
 var hands = [];
 var fingers = [];

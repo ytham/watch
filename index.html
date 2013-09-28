@@ -1,17 +1,19 @@
 <html>
   <head>
     <title>Watch Interface</title>
-    <style>
+    <link href='http://fonts.googleapis.com/css?family=Raleway:400,700' rel='stylesheet' type='text/css'>
+    <style type="text/css">
       body {
         margin: 0px;
-        padding: 40px 0px;
+        padding: 20px 0px 20px 0px;
+        text-align: center;
+        font-family: 'Raleway', sans-serif;
       }
 
       #mainWindow {
         display: inline-block;
-        position: absolute;
-        margin: 0 auto;
-        width: 400px;
+        position: relative;
+        width: 350px;
         height: 100%;
         overflow: hidden;
         z-index: 50;
@@ -19,22 +21,51 @@
 
       #content {
         display: inline-block;
+        text-align: left;
         position: relative;
         width: 1000px;
         height: 100%;
         background-color: #FF0000;
       }
 
+      #footer {
+        display: inline-block;
+        position: absolute;
+        bottom: 0px;
+        left: 0px;
+        width: 350px;
+        height: 50px;
+        background-color: #00AAFF;
+        margin: 0px;
+      }
+
       .page {
         display: inline-block;
-        width: 400%;
+        text-align: left;
+        float: left;
+        width: 300px;
         height: 100%;
+        margin: 0px;
         background-color: #00FF00;
+        overflow: hidden;
+      }
+
+      .clock {
+        font-size: 4em;
       }
     </style>
 
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <srcipt src="/javascripts/leapcontrol.js"></script>
+    <script src="http://js.leapmotion.com/0.2.1/leap.min.js"></script>
     <script type="text/javascript">
+      var hands = [];
+      var fingers = [];
 
+      Leap.loop(function (frame) {
+
+      });
     </script>
   </head>
 
@@ -42,9 +73,21 @@
     <div id="mainWindow">
       <div id="content">
       
-        
+        <div class="page" id="home">
+          <span class="clock">
+            8:30
+          </span>
+        </div><div class="page" id="messages">
+          Messages
+        </div>
+        <div class="page" id="email">
+          Messages
+        </div>
 
       </div> 
+      <div id="footer">
+        Footer
+      </div>
     </div>
   </body>
 </html>  

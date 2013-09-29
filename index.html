@@ -5,10 +5,13 @@
     <style type="text/css">
       body {
         background-image: url('http://www.yujiangtham.com/hack/forest.jpg');
+        background-size: cover;
+        background-position: center;
         margin: 0px;
         padding: 20px 0px 20px 0px;
         text-align: center;
         font-family: 'Raleway', sans-serif;
+        font-size: 1.7em;
       }
 
       #mainWindow {
@@ -24,9 +27,9 @@
         display: inline-block;
         text-align: left;
         position: relative;
-        width: 1750px;
-        height: 100%;
-        background-color: #FF0000;
+        width: 1800px;
+        height: 200%;
+        background-color: #FFFFFF;
       }
 
       .page {
@@ -36,22 +39,28 @@
         width: 350px;
         height: 100%;
         margin: 0px;
-        background-color: #00FF00;
+        background-color: #E6E6E6;
         overflow: hidden;
-        border: 10px solid white;
+      }
+
+      .withBorder {
+        border-right: 10px solid white;
       }
 
       #footer {
         display: inline-block;
         position: absolute;
+        font-size: 0.7em;
         bottom: 0px;
         left: 0px;
         width: 350px;
         height: 50px;
-        background-color: #00AAFF;
+        background-color: #66DDFF;
         margin: 0px;
         padding: 0px;
         overflow: hidden;
+        opacity: 0.95;
+        z-index: 99;
       }
 
       .footerSection {
@@ -70,10 +79,35 @@
       }
 
       .clock {
-        font-size: 5em;
+        font-size: 3em;
         font-weight: 200;
         text-align: center;
         margin-top: 20px;
+      }
+
+      .section { 
+        padding: 10px 20px 10px 20px;
+        margin: 0px;
+        height: 100px;
+        width: 350px;
+        overflow: hidden;
+      }
+
+      .message {
+        height: 99px;
+        border-bottom: 1px solid #777777;
+      }
+
+      #selection {
+        display: inline-block;
+        position: absolute;
+        bottom: 0px;
+        left: 0px;
+        width: 350px;
+        height: 120px;
+        background-color: #00AAFF;
+        opacity: 0.2;
+        z-index: 75;
       }
     </style>
 
@@ -87,11 +121,30 @@
       var fingers = [];
       var content;
       var swipeMode = false;
+      var start = false;
+      var selectionShown = true;
+
+      // Swipe variables
+      var swiping = false;
+      var startSwipe = [];
+      var endSwipe = [];
+      var swipeThreshold = 110;
 
       function init() {
         $('#content').css('left', -720);
+        $('#content').css('top', -100%);
+        $('#selection').hide();
+        //$('#mainWindow').hide();
       }
 
+      $(document).ready(function() {
+        var socket = io.connect('http://localhost');
+        socket.on('start', function (data) {
+          console.log(data);
+        });
+      }
+
+      /*
       var controller = new Leap.Controller({enableGestures: true});
       controller.on('gesture', function (gesture) {
         console.log(gesture);
@@ -107,22 +160,138 @@
         }
       });
 
-      controller.connect();
+      controller.connect();*/
 
       Leap.loop(function (frame) {
         if (frame.hands.length > 0) {
           hand = frame.hands[0];
           finger = hand.fingers[0];
-          console.log(frame.hands[0].fingers.length + ", " + swipeMode);
-          if (frame.hands[0].fingers.length > 1 && frame.hands[0].fingers.length <= 3) {
+          //console.log(frame.hands[0].fingers.length + ", " + swipeMode);
+          //console.log(frame.hands[0].fingers.length);
+          
+          if (frame.hands[0].fingers.length > 0 && frame.hands[0].fingers.length <= 3) {
             swipeMode = false;
-            
-          }
+            //console.log(finger.tipPosition[1]);
+            if (selectionShown) {
+              $('#selection').show();
+              var currentPosition = $('#selection').position();
+              if (currentPosition.top != 0 && finger.tipPosition[1] > 250) {
+                $('#selection').animate({ top: "0px" }, 50);
+              } else if (currentPosition.top != 120 && finger.tipPosition[1] > 150 && finger.tipPosition[1] <= 200) {
+                $('#selection').animate({ top: "120px" }, 50);
+              } else if (currentPosition.top != 240 && finger.tipPosition[1] > 100 && finger.tipPosition[1] <= 150) {
+                $('#selection').animate({ top: "240px" }, 50);
+              } else if (currentPosition.top != 360 && finger.tipPosition[1] > 50 && finger.tipPosition[1] <= 100) {
+                $('#selection').animate({ top: "360px" }, 50);
+              } else if (currentPosition.top != 480 && finger.tipPosition[1] > 0 && finger.tipPosition[1] <= 50) {
+                $('#selection').animate({ top: "480px" }, 50);
+              } 
+            } else {
+              $('#selection').hide();
+            }
+          } else {
+            $('#selection').hide();
+          }            
           if (frame.hands[0].fingers.length > 3) {
             swipeMode = true;
+            //console.log(finger.tipPosition[2]);
+
+            if (finger.tipPosition[2] < 0 && swiping === false) {
+              // Enter detection zone
+              swiping = false;
+              startSwipe = [];
+              startSwipe = [hand.palmPosition[0], hand.palmPosition[1]];
+              swiping = true;
+              console.log("======== SWIPING START ========");
+
+            } else if (finger.tipPosition[2] < 0 && swiping === true) {
+              // Still in detection zone; calculate traveled distance and compare vs threshold each iteration
+              var swipeDistance = [hand.palmPosition[0] - startSwipe[0], hand.palmPosition[1] - startSwipe[1]];
+
+              var validSwipeDirection = verifySwipe(swipeDistance);
+              if (validSwipeDirection != 'invalid') {
+                console.log(swipeDistance);
+                transitionPage(validSwipeDirection);
+                swiping = false;
+                startSwipe = [];
+              }
+
+            } else if (finger.tipPosition[2] > 0 && swiping === true) {
+              // Leaving detection zone; calculate distance
+              swiping = false;
+              startSwipe = [];
+            }
           }
+        } else {
+          // Reset parameters
+          //console.log("======= RESET PARAMETERS =======");
+          swiping = false;
+          startSwipe = [];
+          $('#selection').hide();
         }
       });
+
+      function transitionPage(direction) {
+        console.log("Transitioning Page: " + direction);
+        content = $('#content').position();
+        if (direction === 'left') {
+          var moveTo = content.left + 360;
+          if (moveTo <= 0) {
+            $('#content').animate({ left: "+=360px" }, 400);
+          } 
+        }
+        if (direction === 'right') {
+          var moveTo = content.left - 360;
+          if (moveTo <= 0) {
+            $('#content').animate({ left: "-=360px" }, 400);
+          } 
+        }
+      }
+
+      function animateTransition(target, axis) {
+        console.log("animateTransition");
+        content = $('#content').position();
+        if (axis === 'x') {
+          
+          var distance = target - content.left;
+          var distanceTransitionUnits = Math.abs(distance/36);
+          console.log("animateTransition x: " + distanceTransitionUnits + ", " + distance);
+          var move = [];
+          for (var i = 0; i < Math.abs(distance); i += distanceTransitionUnits) {
+            var currentPosition = $('#content').position();
+            move[i] = (function (index) {
+              console.log(index); 
+              return setTimeout(function () { 
+                if (distance < 0) {
+                  console.log("setTimeout: " + index);
+                  $('#content').css('left', content.left + index);
+                } else {
+                  console.log("setTimeout: " + index);
+                  $('#content').css('left', content.left - index);
+                }
+              }, index);
+            })(i);
+
+            /*
+            $('#content').css('left', function () {
+              if (distance < 0) {
+                // Move Left
+                var currentPosition = $('#content').position();
+                console.log(i + " : " + currentPosition.left);
+                return currentPosition.left + 10;
+              } else {
+                // Move Right
+                var currentPosition = $('#content').position();
+                console.log(i + " : " + currentPosition.left);
+                return currentPosition.left - 10;
+              }
+            });*/
+          }
+          for (var j = 0; j < Math.abs(distance); j += distanceTransitionUnits) {
+            move[j]();
+          }
+        }
+      }
 
       function changePage(gesture, direction) {
         content = $('#content').position();
@@ -131,60 +300,64 @@
           if (direction === 'left') {
             console.log("Moving Left");
             $('#content').css('left', function () {
-              var moveTo = content.left + 350;
+              var moveTo = content.left + 360;
               console.log(moveTo);
               if (moveTo <= 0) {
                 return moveTo;
               } else {
-                return content.left;
+                return 0;
               }
             });
           }
           if (direction === 'right') {
             console.log("Moving Right");
             $('#content').css('left', function () {
-              var moveTo = content.left - 350;
+              var moveTo = content.left - 360;
               console.log(moveTo);
-              if (moveTo >= -1400) {
+              if (moveTo >= -1440) {
                 return moveTo;
               } else {
-                return content.left;
+                return -1440;
               }
             });
           }
         }
+      }
+
+      function verifySwipe(distance) {
+        var outputDirection = 'invalid';
+        var swipeDirection = Math.abs(distance[0]) > Math.abs(distance[1]) ? 'x' : 'y';
+
+        if (swipeDirection === 'x') {
+          if (distance[0] > swipeThreshold) {
+            outputDirection = 'left';
+          }
+          if (distance[0] < -1*swipeThreshold) {
+            outputDirection = 'right';
+          }
+        }
+        if (swipeDirection === 'y') {
+          if (distance[1] > swipeThreshold) {
+            outputDirection = 'down';
+          }
+          if (distance[1] < -1*swipeThreshold) {
+            outputDirection = 'up';
+          }
+        }
+        //console.log(outputDirection);
+        return outputDirection;
       }
     </script>
   </head>
 
   <body onload="init()">
     <div id="mainWindow">
-      <div id="content">
-        
-        <div class="page" id="news">
-          News
-        </div><div class="page" id="navigation">
-          Navigation
-        </div><div class="page" id="home">
-          <div class="clock">
-            8:26
-          </div>
-        </div><div class="page" id="messages">
-          <div class="message">
-            <b>Kristen Bailey</b><br>
-            Hey, can you help me find my 
-        </div>
-        <div class="page" id="email">
-          Email
-        </div>
-
-      </div> 
       <div id="footer">
         <div class="footerSection" id="footer_news">
           News
         </div><div class="footerSection" id="footer_navigation">
           Nav
-        </div><div class="footerSection footerSelected" id="footer_home">
+        </div><div class="footerSection" id="footer_home">
           Home
         </div><div class="footerSection" id="footer_messages">
           Msg
@@ -192,6 +365,82 @@
           Mail
         </div>
       </div>
+
+      <div id="selection"> </div>
+
+      <div id="content">
+        
+        <div class="page withBorder" id="news">
+          <div class="section message">
+            <b>Kristen Bailey</b><br>
+            Want to ride our new tandem bike across the Golden Gate Bridge?
+          </div>
+          <div class="section message">
+            <b>Tom Lindenberg</b><br>
+            Wow, great job on your presentation just now!
+          </div>
+          <div class="section message">
+            <b>Jason Lee</b><br>
+            I think I lost my left shoe last night.  Not sure what happened.
+          </div>
+          <div class="section message">
+            <b>Mindy Stater</b><br>
+            We totally saw them last night!
+          </div>
+          <div class="section message">
+            <b>Jessica Mou</b><br>
+            Your brother told me that you might have some extra boxes?
+          </div>
+          <div class="section message">
+            <b>Tom Greenfield</b><br>
+            Yeah dude!
+          </div>
+        </div><div class="page withBorder" id="navigation">
+          
+        </div><div class="page withBorder" id="home">
+          <div class="section clock">
+            8:26<font size="6">PM</font>
+          </div>
+          <div class="section ">
+            <b>2</b> Unread Messages
+          </div>
+          <div class="section ">
+            <b>5</b> Unread Emails
+          </div>
+        </div><div class="page withBorder" id="messages">
+          <div class="section message">
+            <b>Kristen Bailey</b><br>
+            Want to ride our new tandem bike across the Golden Gate Bridge?
+          </div>
+          <div class="section message">
+            <b>Tom Lindenberg</b><br>
+            Wow, great job on your presentation just now!
+          </div>
+          <div class="section message">
+            <b>Jason Lee</b><br>
+            I think I lost my left shoe last night.  Not sure what happened.
+          </div>
+          <div class="section message">
+            <b>Mindy Stater</b><br>
+            We totally saw them last night!
+          </div>
+          <div class="section message">
+            <b>Jessica Mou</b><br>
+            Your brother told me that you might have some extra boxes?
+          </div>
+          <div class="section message">
+            <b>Tom Greenfield</b><br>
+            Yeah dude!
+          </div>
+        </div>
+        <div class="page withBorder" id="email">
+          <div class="section message">
+            <b>Mark Felix</b><br>
+            About the quarterly report from last week, I think there were a few errors...
+          </div>
+        </div>
+      </div> 
+
     </div>
   </body>
 </html>  

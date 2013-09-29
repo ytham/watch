@@ -10,11 +10,13 @@ var fingers = [];
 
 var board, servo;
 var moveAngle;
-var boardOptions = { port: '/dev/cu.usbmodemfa131' };
+var boardOptions = { port: '/dev/cu.usbmodemfd111' };
 
-var openAngle = 160;
-var closedAngle = 20;
+var openAngle = 170;
+var closedAngle = 10;
 var opened = false;
+var shouldOpen = false;
+var shouldClose = false;
 
 
 // HTTP server request handler
@@ -56,15 +58,27 @@ Leap.loop(function (frame) {
 
 // Johnny-Five
 /*
-board = new Five.Board();
+board = new Five.Board(boardOptions);
 board.on('ready', function() {
-  servo = new Five.Servo(9);
+  servo = new Five.Servo(10);
 
   // Start closed
   moveAngle = closedAngle;
+  servo.move(moveAngle);
 
   this.loop(50, function () {
-    detectOpenOrClose(servo);
+    if (shouldOpen) {
+      moveAngle = openAngle;
+      servo.move(moveAngle);
+      shouldOpen = false;
+      io.socket.emit('start', 'Device is Starting');
+    }
+    if (shouldClose) {
+      moveAngle = closedAngle;
+      servo.move(moveAngle);
+      shouldClose = false;
+    }
+    //detectOpenOrClose(servo);
   });
 });*/
 
@@ -72,20 +86,30 @@ function detectOpenOrClose(s) {
   if (moveAngle < 90 && opened === false) {
     moveAngle = openAngle;
     s.move(moveAngle);
+    console.log("Opening");
   } 
   if (moveAngle > 90 && opened === true) {
     moveAngle = closedAngle;
     s.move(moveAngle);
+    console.log("Closing");
   }
 }
 
 function handleSwipe(g) {
+  if (g.direction[1] > 0.5 && Math.abs(g.direction[0]) < 0.2 && g.speed > 600 && shouldOpen === false) {
+    shouldOpen = true;
+  }
+  if (g.direction[1] < -0.5 && Math.abs(g.direction[0]) < 0.2 && g.speed > 600 && shouldClose === false) {
+    //shouldClose = true;
+  }
+}
+
+/*
+function handleSwipe(g) {
   if (g.direction[1] > 0.5 && g.speed > 600 && opened === false) {
     opened = true;
-    console.log("Opening");
   }
   if (g.direction[1] < -0.5 && g.speed > 600 && opened === true) {
     opened = false;
-    console.log("Closing");
   }
-}
+}*/

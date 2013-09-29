@@ -15,7 +15,7 @@ var moveAngle;
 var boardOptions = { port: '/dev/cu.usbmodemfd111' };
 
 var openAngle = 170;
-var closedAngle = 10;
+var closedAngle = 0;
 var opened = false;
 var shouldOpen = false;
 var shouldClose = false;
@@ -80,12 +80,13 @@ board.on('ready', function() {
       moveAngle = openAngle;
       servo.move(moveAngle);
       shouldOpen = false;
-      socket.emit('start', 'Device is Starting');
+      //socket.emit('start', 'Device is Starting');
     }
     if (shouldClose) {
       moveAngle = closedAngle;
       servo.move(moveAngle);
       shouldClose = false;
+      //socket.emit('end', 'Device is Shutting Down');
     }
     //detectOpenOrClose(servo);
   });
@@ -106,12 +107,15 @@ function detectOpenOrClose(s) {
 
 function handleSwipe(g) {
   if (g.direction[1] > 0.5 && Math.abs(g.direction[0]) < 0.2 && g.speed > 600 && shouldOpen === false) {
-    //shouldOpen = true;
+    shouldOpen = true;
+    shouldClose = false;
     console.log("Swipe Up");
     socket.emit('start', 'Device is Starting');
   }
-  if (g.direction[1] < -0.5 && Math.abs(g.direction[0]) < 0.2 && g.speed > 600 && shouldClose === false) {
-    //shouldClose = true;
+  if (g.direction[1] < -0.65 && Math.abs(g.direction[0]) < 0.15 && g.speed > 650 && shouldClose === false) {
+    shouldClose = true;
+    shouldOpen = false;
+    socket.emit('end', 'Device is Shutting Down');
   }
 }
 

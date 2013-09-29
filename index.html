@@ -198,9 +198,14 @@
         var socket = io.connect('http://localhost');
         socket.on('start', function (data) {
           console.log(data);
-          $('#blackOverlay').fadeOut(500);
+          $('#blackOverlay').animate({ opacity: 0 });
+        });
+        socket.on('end', function (data) {
+          console.log(data);
+          $('#blackOverlay').animate({ opacity: 1 });
         });
         $('#main_clock').html(new Date().toString("hh:mm tt").toLowerCase());
+        $('#blackOverlayText').html('<font color="#FF0000">X</font>atch');
       });
 
       
@@ -288,6 +293,10 @@
               var validSwipeDirection = verifySwipe(swipeDistance);
               if (validSwipeDirection != 'invalid') {
                 //console.log(swipeDistance);
+                if (isBottomRow === false) {
+                  transitionDown();
+                  isBottomRow = true;
+                }
                 transitionPage(validSwipeDirection);
                 swiping = false;
                 startSwipe = [];
@@ -299,6 +308,7 @@
               swiping = false;
               startSwipe = [];
             }
+
           }
         } else {
           // Reset parameters
@@ -365,6 +375,12 @@
         console.log('====== TRANSITION UP ======');
         //$('#content_top').animate({ top: "+=100%" }, 400);
         $('#content_bottom').animate({ top: "+=100%" }, 400);
+      }
+
+      function transitionDown() {
+        console.log('====== TRANSITION DOWN ======');
+        //$('#content_top').animate({ top: "+=100%" }, 400);
+        $('#content_bottom').animate({ top: "-=100%" }, 400);
       }
 
       function verifySwipe(distance) {
@@ -523,7 +539,7 @@
 
     <div id="blackOverlay">
       <div id="blackOverlayText">
-        Xatch
+        
       </div>
     </div>
   </body>

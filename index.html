@@ -1,6 +1,6 @@
 <html>
   <head>
-    <title>Watch Interface</title>
+    <title>Xatch</title>
     <link href='http://fonts.googleapis.com/css?family=Raleway:200,400,700' rel='stylesheet' type='text/css'>
     <style type="text/css">
       body {
@@ -11,7 +11,30 @@
         padding: 20px 0px 20px 0px;
         text-align: center;
         font-family: 'Raleway', sans-serif;
-        font-size: 1.7em;
+        font-size: 1.4em;
+      }
+
+      #blackOverlay {
+        display: block;
+        position: fixed;
+        top: 0px;
+        left: 0px;
+        width: 100%;
+        height: 100%;
+        margin: 0px;
+        color: #FFFFFF;
+        font-size: 4em;
+        text-align: center;
+        background-color: #000000;
+        z-index: 99;
+      }
+
+      #blackOverlayText {
+        width: 100%;
+        text-align: center;
+        position: absolute;
+        top: 50%;
+        margin-top: -0.8em;
       }
 
       #mainWindow {
@@ -23,12 +46,12 @@
         z-index: 50;
       }
 
-      #content {
+      .content {
         display: inline-block;
         text-align: left;
         position: relative;
         width: 1800px;
-        height: 200%;
+        height: 100%;
         background-color: #FFFFFF;
       }
 
@@ -47,6 +70,10 @@
         border-right: 10px solid white;
       }
 
+      #navigation {
+        background-image: url('http://www.yujiangtham.com/hack/map.png');
+      }
+
       #footer {
         display: inline-block;
         position: absolute;
@@ -60,7 +87,7 @@
         padding: 0px;
         overflow: hidden;
         opacity: 0.95;
-        z-index: 99;
+        z-index: 90;
       }
 
       .footerSection {
@@ -89,7 +116,7 @@
         padding: 10px 20px 10px 20px;
         margin: 0px;
         height: 100px;
-        width: 350px;
+        width: 330px;
         overflow: hidden;
       }
 
@@ -108,6 +135,18 @@
         background-color: #00AAFF;
         opacity: 0.2;
         z-index: 75;
+      }
+
+      #footerSelection {
+        display: inline-block;
+        position: absolute;
+        bottom: 0px;
+        left: 0px;
+        width: 70px;
+        height: 50px;
+        background-color: #0000FF;
+        opacity: 0.2;
+        z-index: 95;
       }
     </style>
 
@@ -128,21 +167,24 @@
       var swiping = false;
       var startSwipe = [];
       var endSwipe = [];
-      var swipeThreshold = 110;
+      var swipeThreshold = 90;
 
       function init() {
-        $('#content').css('left', -720);
-        $('#content').css('top', -100%);
+        $('#content_top').css('left', -720);
+        $('#content_bottom').css('left', -720);
+        $('#content_bottom').css('top', '-100%');
         $('#selection').hide();
-        //$('#mainWindow').hide();
+        $('#footerSelection').css('left', 140);
+        $('#blackOverlay').hide();
       }
 
       $(document).ready(function() {
         var socket = io.connect('http://localhost');
         socket.on('start', function (data) {
           console.log(data);
+          $('#blackOverlay').fadeOut(500);
         });
-      }
+      });
 
       /*
       var controller = new Leap.Controller({enableGestures: true});
@@ -172,6 +214,8 @@
           if (frame.hands[0].fingers.length > 0 && frame.hands[0].fingers.length <= 3) {
             swipeMode = false;
             //console.log(finger.tipPosition[1]);
+
+            // Handle the selection for pages
             if (selectionShown) {
               $('#selection').show();
               var currentPosition = $('#selection').position();
@@ -210,7 +254,7 @@
 
               var validSwipeDirection = verifySwipe(swipeDistance);
               if (validSwipeDirection != 'invalid') {
-                console.log(swipeDistance);
+                //console.log(swipeDistance);
                 transitionPage(validSwipeDirection);
                 swiping = false;
                 startSwipe = [];
@@ -233,73 +277,30 @@
 
       function transitionPage(direction) {
         console.log("Transitioning Page: " + direction);
-        content = $('#content').position();
+        content = $('#content_bottom').position();
         if (direction === 'left') {
           var moveTo = content.left + 360;
           if (moveTo <= 0) {
-            $('#content').animate({ left: "+=360px" }, 400);
+            $('#content_bottom').animate({ left: "+=360px" }, 400);
+            $('#footerSelection').animate({ left: "-=70px" }, 400);
           } 
         }
         if (direction === 'right') {
           var moveTo = content.left - 360;
-          if (moveTo <= 0) {
-            $('#content').animate({ left: "-=360px" }, 400);
+          if (moveTo >= -1440) {
+            $('#content_bottom').animate({ left: "-=360px" }, 400);
+            $('#footerSelection').animate({ left: "+=70px" }, 400);
           } 
         }
       }
 
-      function animateTransition(target, axis) {
-        console.log("animateTransition");
-        content = $('#content').position();
-        if (axis === 'x') {
-          
-          var distance = target - content.left;
-          var distanceTransitionUnits = Math.abs(distance/36);
-          console.log("animateTransition x: " + distanceTransitionUnits + ", " + distance);
-          var move = [];
-          for (var i = 0; i < Math.abs(distance); i += distanceTransitionUnits) {
-            var currentPosition = $('#content').position();
-            move[i] = (function (index) {
-              console.log(index); 
-              return setTimeout(function () { 
-                if (distance < 0) {
-                  console.log("setTimeout: " + index);
-                  $('#content').css('left', content.left + index);
-                } else {
-                  console.log("setTimeout: " + index);
-                  $('#content').css('left', content.left - index);
-                }
-              }, index);
-            })(i);
-
-            /*
-            $('#content').css('left', function () {
-              if (distance < 0) {
-                // Move Left
-                var currentPosition = $('#content').position();
-                console.log(i + " : " + currentPosition.left);
-                return currentPosition.left + 10;
-              } else {
-                // Move Right
-                var currentPosition = $('#content').position();
-                console.log(i + " : " + currentPosition.left);
-                return currentPosition.left - 10;
-              }
-            });*/
-          }
-          for (var j = 0; j < Math.abs(distance); j += distanceTransitionUnits) {
-            move[j]();
-          }
-        }
-      }
-
       function changePage(gesture, direction) {
-        content = $('#content').position();
+        content = $('#content_bottom').position();
         console.log(swipeMode);
         if (swipeMode) {
           if (direction === 'left') {
             console.log("Moving Left");
-            $('#content').css('left', function () {
+            $('#content_bottom').css('left', function () {
               var moveTo = content.left + 360;
               console.log(moveTo);
               if (moveTo <= 0) {
@@ -311,7 +312,7 @@
           }
           if (direction === 'right') {
             console.log("Moving Right");
-            $('#content').css('left', function () {
+            $('#content_bottom').css('left', function () {
               var moveTo = content.left - 360;
               console.log(moveTo);
               if (moveTo >= -1440) {
@@ -364,36 +365,47 @@
         </div><div class="footerSection" id="footer_email">
           Mail
         </div>
+        <div id="footerSelection"> </div>
       </div>
 
       <div id="selection"> </div>
 
-      <div id="content">
+      <div class="content" id="content_top">
+        <div class="page withBorder" id="news_above">
+          News_Above
+        </div><div class="page withBorder" id="navigation_above">
+          Nav_Above
+        </div><div class="page withBorder" id="home_above">
+          Home_Above
+        </div><div class="page withBorder" id="messages_above">
+          Messages_Above
+        </div><div class="page withBorder" id="reply">
+          Reply
+        </div>
+      </div>
+
+      <div class="content" id="content_bottom">
         
         <div class="page withBorder" id="news">
           <div class="section message">
-            <b>Kristen Bailey</b><br>
-            Want to ride our new tandem bike across the Golden Gate Bridge?
+            <b>Slowdown Looms</b><br>
+            House votes to delay ObamaCare.
           </div>
           <div class="section message">
-            <b>Tom Lindenberg</b><br>
-            Wow, great job on your presentation just now!
+            <b>Stepping out of the Shadows</b><br>
+            Marie Monville has spent years trying to remove the label of "the shooter's wife."
           </div>
           <div class="section message">
-            <b>Jason Lee</b><br>
-            I think I lost my left shoe last night.  Not sure what happened.
+            <b>Cuba to allow athletes to seek pro contracts abroad</b><br>
+            Ever since the Cuban Revolution more than 50 years ago, athletes on the communist island have been able to garner gold medals and glory, but not big paychecks.
           </div>
           <div class="section message">
-            <b>Mindy Stater</b><br>
-            We totally saw them last night!
+            <b>The device that could change the Internet</b><br>
+            Depending whom you ask, Chad Russell and Charles Butkus' invention is either a step forward for the Internet -- or a death knell for free content.
           </div>
           <div class="section message">
-            <b>Jessica Mou</b><br>
-            Your brother told me that you might have some extra boxes?
-          </div>
-          <div class="section message">
-            <b>Tom Greenfield</b><br>
-            Yeah dude!
+            <b>Bill Gates: Control-Alt-Delete was a mistake</b><br>
+            If you pressed Control-Alt-Delete to log on before reading this, Bill Gates says he's sorry.
           </div>
         </div><div class="page withBorder" id="navigation">
           
@@ -418,7 +430,7 @@
           </div>
           <div class="section message">
             <b>Jason Lee</b><br>
-            I think I lost my left shoe last night.  Not sure what happened.
+            I think I lost my left shoe last night somehow...  Not sure what happened.
           </div>
           <div class="section message">
             <b>Mindy Stater</b><br>
@@ -435,12 +447,34 @@
         </div>
         <div class="page withBorder" id="email">
           <div class="section message">
-            <b>Mark Felix</b><br>
+            <b>Mark Finlay</b><br>
             About the quarterly report from last week, I think there were a few errors...
+          </div>
+          <div class="section message">
+            <b>Theodore Tran</b><br>
+            Thanks for the introduction!
+          </div>
+          <div class="section message">
+            <b>elizabethc@juxton.co.uk</b><br>
+            Over the past few months, I've had the pleasure of working with some very influential people...
+          </div>
+          <div class="section message">
+            <b>Kelly Jones</b><br>
+            There's always new software updates for my phone, but I can never figure out how to get the...
+          </div>
+          <div class="section message">
+            <b>Doreen Grant</b><br>
+            Whatever you do, don't eat the yellow snow!!
           </div>
         </div>
       </div> 
 
+    </div>
+
+    <div id="blackOverlay">
+      <div id="blackOverlayText">
+        Xatch
+      </div>
     </div>
   </body>
 </html>  

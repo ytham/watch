@@ -5,6 +5,8 @@ var io = require('socket.io').listen(http);
 //var handwriting = require('./handwriting');
 var fs = require('fs');
 
+var socket;
+
 var hands = [];
 var fingers = [];
 
@@ -31,13 +33,20 @@ function handler (req, res) {
     res.end(data);
   });
 }
-
 http.listen(8080);
+
+
+// SocketIO
+io.sockets.on('connection', function (s) {
+  console.log("SocketIO");
+  socket = s;
+});
 
 
 // Leap functions
 var controller = new Leap.Controller({enableGestures: true});
 controller.on('gesture', function (gesture) {
+  //console.log(gesture);
   if (gesture.type === 'swipe' && gesture.state === 'stop' && gesture.duration > 8000) {
     handleSwipe(gesture);
   }
@@ -71,7 +80,7 @@ board.on('ready', function() {
       moveAngle = openAngle;
       servo.move(moveAngle);
       shouldOpen = false;
-      io.socket.emit('start', 'Device is Starting');
+      socket.emit('start', 'Device is Starting');
     }
     if (shouldClose) {
       moveAngle = closedAngle;
@@ -97,7 +106,9 @@ function detectOpenOrClose(s) {
 
 function handleSwipe(g) {
   if (g.direction[1] > 0.5 && Math.abs(g.direction[0]) < 0.2 && g.speed > 600 && shouldOpen === false) {
-    shouldOpen = true;
+    //shouldOpen = true;
+    console.log("Swipe Up");
+    socket.emit('start', 'Device is Starting');
   }
   if (g.direction[1] < -0.5 && Math.abs(g.direction[0]) < 0.2 && g.speed > 600 && shouldClose === false) {
     //shouldClose = true;

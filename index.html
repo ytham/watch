@@ -4,7 +4,7 @@
     <link href='http://fonts.googleapis.com/css?family=Raleway:200,400,700' rel='stylesheet' type='text/css'>
     <style type="text/css">
       body {
-        background-image: url('http://www.yujiangtham.com/hack/forest.jpg');
+        background-image: url('http://www.yujiangtham.com/hack/wristbg.jpg');
         background-size: cover;
         background-position: center;
         margin: 0px;
@@ -77,7 +77,7 @@
       #footer {
         display: inline-block;
         position: absolute;
-        font-size: 0.7em;
+        font-size: 0.4em;
         bottom: 0px;
         left: 0px;
         width: 350px;
@@ -97,19 +97,12 @@
         width: 70px;
         height: 50px;
         margin: 0px;
-        padding-top: 15px;
+        padding-top: 4px;
         text-align: center;
       }
 
       .footerSelected {
         background-color: #0000FF;
-      }
-
-      .clock {
-        font-size: 3em;
-        font-weight: 200;
-        text-align: center;
-        margin-top: 20px;
       }
 
       .section { 
@@ -120,9 +113,30 @@
         overflow: hidden;
       }
 
+      .clock {
+        font-size: 3em;
+        font-weight: 200;
+        text-align: center;
+        margin-top: 5px;
+      }
+
       .message {
         height: 99px;
         border-bottom: 1px solid #777777;
+      }
+
+      .messagesTitle {
+        font-size: 1.5em;
+        text-align: center;
+        margin-left: -10px;
+        margin-top: 10px;
+      }
+
+      .reply {
+        font-size: 1.3em;
+        text-align: center;
+        bottom: 0px;
+        margin-top: 10px;
       }
 
       #selection {
@@ -152,8 +166,8 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="http://cdnjs.cloudflare.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
-    <srcipt src="/javascripts/leapcontrol.js"></script>
     <script src="http://js.leapmotion.com/0.2.1/leap.min.js"></script>
+    <script type="text/javascript" src="http://www.datejs.com/build/date.js"></script>
     <script type="text/javascript">
       var hand, finger;
       var hands = [];
@@ -162,6 +176,7 @@
       var swipeMode = false;
       var start = false;
       var selectionShown = true;
+      var isBottomRow = true;
 
       // Swipe variables
       var swiping = false;
@@ -169,13 +184,14 @@
       var endSwipe = [];
       var swipeThreshold = 90;
 
+
       function init() {
         $('#content_top').css('left', -720);
         $('#content_bottom').css('left', -720);
         $('#content_bottom').css('top', '-100%');
         $('#selection').hide();
         $('#footerSelection').css('left', 140);
-        $('#blackOverlay').hide();
+        //$('#blackOverlay').hide();
       }
 
       $(document).ready(function() {
@@ -184,7 +200,10 @@
           console.log(data);
           $('#blackOverlay').fadeOut(500);
         });
+        $('#main_clock').html(new Date().toString("hh:mm tt").toLowerCase());
       });
+
+      
 
       /*
       var controller = new Leap.Controller({enableGestures: true});
@@ -214,24 +233,38 @@
           if (frame.hands[0].fingers.length > 0 && frame.hands[0].fingers.length <= 3) {
             swipeMode = false;
             //console.log(finger.tipPosition[1]);
-
+            var contentPosition = $('#content_bottom').position();
+            var currentPosition = $('#selection').position();
             // Handle the selection for pages
-            if (selectionShown) {
+            if (selectionShown && contentPosition.left !== -360) {
               $('#selection').show();
-              var currentPosition = $('#selection').position();
-              if (currentPosition.top != 0 && finger.tipPosition[1] > 250) {
+              
+              if (currentPosition.top != 0 && finger.tipPosition[1] > 150) {
                 $('#selection').animate({ top: "0px" }, 50);
-              } else if (currentPosition.top != 120 && finger.tipPosition[1] > 150 && finger.tipPosition[1] <= 200) {
+              } else if (currentPosition.top != 120 && finger.tipPosition[1] > 90 && finger.tipPosition[1] <= 120) {
                 $('#selection').animate({ top: "120px" }, 50);
-              } else if (currentPosition.top != 240 && finger.tipPosition[1] > 100 && finger.tipPosition[1] <= 150) {
+              } else if (currentPosition.top != 240 && finger.tipPosition[1] > 60 && finger.tipPosition[1] <= 90) {
                 $('#selection').animate({ top: "240px" }, 50);
-              } else if (currentPosition.top != 360 && finger.tipPosition[1] > 50 && finger.tipPosition[1] <= 100) {
+              } else if (currentPosition.top != 360 && finger.tipPosition[1] > 30 && finger.tipPosition[1] <= 60) {
                 $('#selection').animate({ top: "360px" }, 50);
-              } else if (currentPosition.top != 480 && finger.tipPosition[1] > 0 && finger.tipPosition[1] <= 50) {
+              } else if (currentPosition.top != 480 && finger.tipPosition[1] > 0 && finger.tipPosition[1] <= 30) {
                 $('#selection').animate({ top: "480px" }, 50);
               } 
             } else {
               $('#selection').hide();
+            }
+
+            //console.log(finger.tipPosition[2] + " | " + currentPosition.top);
+            if (finger.tipPosition[2] < -100 && currentPosition.top === 0) {
+              var contentPosition = $('#content_bottom').position();
+              console.log("contentPosition: " + contentPosition.left);
+              if (contentPosition.left === -1080) {
+                console.log("ContentPosition 1080");
+                if (isBottomRow) {
+                  transitionUp();
+                }
+                isBottomRow = false;
+              }
             }
           } else {
             $('#selection').hide();
@@ -258,6 +291,7 @@
                 transitionPage(validSwipeDirection);
                 swiping = false;
                 startSwipe = [];
+                validSwipeDirection = 'invalid';
               }
 
             } else if (finger.tipPosition[2] > 0 && swiping === true) {
@@ -282,6 +316,7 @@
           var moveTo = content.left + 360;
           if (moveTo <= 0) {
             $('#content_bottom').animate({ left: "+=360px" }, 400);
+            $('#content_top').animate({ left: "+=360px" }, 400);
             $('#footerSelection').animate({ left: "-=70px" }, 400);
           } 
         }
@@ -289,6 +324,7 @@
           var moveTo = content.left - 360;
           if (moveTo >= -1440) {
             $('#content_bottom').animate({ left: "-=360px" }, 400);
+            $('#content_top').animate({ left: "-=360px" }, 400);
             $('#footerSelection').animate({ left: "+=70px" }, 400);
           } 
         }
@@ -325,6 +361,12 @@
         }
       }
 
+      function transitionUp() {
+        console.log('====== TRANSITION UP ======');
+        //$('#content_top').animate({ top: "+=100%" }, 400);
+        $('#content_bottom').animate({ top: "+=100%" }, 400);
+      }
+
       function verifySwipe(distance) {
         var outputDirection = 'invalid';
         var swipeDirection = Math.abs(distance[0]) > Math.abs(distance[1]) ? 'x' : 'y';
@@ -355,15 +397,15 @@
     <div id="mainWindow">
       <div id="footer">
         <div class="footerSection" id="footer_news">
-          News
+          <img src="http://www.yujiangtham.com/hack/footer_news.png">
         </div><div class="footerSection" id="footer_navigation">
-          Nav
+          <img src="http://www.yujiangtham.com/hack/footer_navigation.png">
         </div><div class="footerSection" id="footer_home">
-          Home
+          <img src="http://www.yujiangtham.com/hack/footer_home.png">
         </div><div class="footerSection" id="footer_messages">
-          Msg
+          <img src="http://www.yujiangtham.com/hack/footer_messages.png">
         </div><div class="footerSection" id="footer_email">
-          Mail
+          <img src="http://www.yujiangtham.com/hack/footer_mail.png">
         </div>
         <div id="footerSelection"> </div>
       </div>
@@ -372,14 +414,22 @@
 
       <div class="content" id="content_top">
         <div class="page withBorder" id="news_above">
-          News_Above
+          
         </div><div class="page withBorder" id="navigation_above">
           Nav_Above
         </div><div class="page withBorder" id="home_above">
           Home_Above
         </div><div class="page withBorder" id="messages_above">
-          Messages_Above
-        </div><div class="page withBorder" id="reply">
+          <div class="section messagesTitle">
+            Kristen Bailey
+          </div>
+          <div class="section">
+            Want to ride our new tandem bike across the Golden Gate Bridge?
+          </div>
+          <div class="section reply">
+            Reply
+          </div>
+        </div><div class="page" id="reply">
           Reply
         </div>
       </div>
@@ -410,14 +460,14 @@
         </div><div class="page withBorder" id="navigation">
           
         </div><div class="page withBorder" id="home">
-          <div class="section clock">
-            8:26<font size="6">PM</font>
+          <div class="section clock" id="main_clock">
+            
           </div>
           <div class="section ">
-            <b>2</b> Unread Messages
+            <b><img src="http://www.yujiangtham.com/hack/footer_messages.png" style="vertical-align: middle"> 3 new</b>
           </div>
           <div class="section ">
-            <b>5</b> Unread Emails
+            <b><img src="http://www.yujiangtham.com/hack/footer_mail.png" style="vertical-align: middle"> 8 new</b>
           </div>
         </div><div class="page withBorder" id="messages">
           <div class="section message">

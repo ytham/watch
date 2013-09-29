@@ -14,6 +14,7 @@ var boardOptions = { port: '/dev/cu.usbmodemfa131' };
 
 var openAngle = 160;
 var closedAngle = 20;
+var opened = false;
 
 
 // HTTP server request handler
@@ -34,12 +35,13 @@ http.listen(8080);
 
 // Leap functions
 var controller = new Leap.Controller({enableGestures: true});
-controller.on('swipe', function () {
-  console.log(gesture);
-  if (gesture.type === 'swipe') {
-    handleSwipe();
+controller.on('gesture', function (gesture) {
+  if (gesture.type === 'swipe' && gesture.state === 'stop' && gesture.duration > 8000) {
+    handleSwipe(gesture);
   }
 });
+
+controller.connect();
 
 Leap.loop(function (frame) {
   if (frame.hands.length > 0) {
@@ -58,6 +60,7 @@ board = new Five.Board();
 board.on('ready', function() {
   servo = new Five.Servo(9);
 
+  // Start closed
   moveAngle = closedAngle;
 
   this.loop(50, function () {
@@ -66,16 +69,23 @@ board.on('ready', function() {
 });*/
 
 function detectOpenOrClose(s) {
-  if (moveAngle < 90) {
+  if (moveAngle < 90 && opened === false) {
     moveAngle = openAngle;
     s.move(moveAngle);
   } 
-  if (moveAngle > 90) {
+  if (moveAngle > 90 && opened === true) {
     moveAngle = closedAngle;
     s.move(moveAngle);
   }
 }
 
-function handleSwipe() {
-
+function handleSwipe(g) {
+  if (g.direction[1] > 0.5 && g.speed > 600 && opened === false) {
+    opened = true;
+    console.log("Opening");
+  }
+  if (g.direction[1] < -0.5 && g.speed > 600 && opened === true) {
+    opened = false;
+    console.log("Closing");
+  }
 }

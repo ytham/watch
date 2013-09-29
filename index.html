@@ -1,9 +1,10 @@
 <html>
   <head>
     <title>Watch Interface</title>
-    <link href='http://fonts.googleapis.com/css?family=Raleway:400,700' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Raleway:200,400,700' rel='stylesheet' type='text/css'>
     <style type="text/css">
       body {
+        background-image: url('http://www.yujiangtham.com/hack/forest.jpg');
         margin: 0px;
         padding: 20px 0px 20px 0px;
         text-align: center;
@@ -23,9 +24,21 @@
         display: inline-block;
         text-align: left;
         position: relative;
-        width: 1000px;
+        width: 1750px;
         height: 100%;
         background-color: #FF0000;
+      }
+
+      .page {
+        display: inline-block;
+        text-align: left;
+        float: left;
+        width: 350px;
+        height: 100%;
+        margin: 0px;
+        background-color: #00FF00;
+        overflow: hidden;
+        border: 10px solid white;
       }
 
       #footer {
@@ -37,21 +50,30 @@
         height: 50px;
         background-color: #00AAFF;
         margin: 0px;
-      }
-
-      .page {
-        display: inline-block;
-        text-align: left;
-        float: left;
-        width: 300px;
-        height: 100%;
-        margin: 0px;
-        background-color: #00FF00;
+        padding: 0px;
         overflow: hidden;
       }
 
+      .footerSection {
+        display: inline-block;
+        position: relative;
+        float: left;
+        width: 70px;
+        height: 50px;
+        margin: 0px;
+        padding-top: 15px;
+        text-align: center;
+      }
+
+      .footerSelected {
+        background-color: #0000FF;
+      }
+
       .clock {
-        font-size: 4em;
+        font-size: 5em;
+        font-weight: 200;
+        text-align: center;
+        margin-top: 20px;
       }
     </style>
 
@@ -60,33 +82,115 @@
     <srcipt src="/javascripts/leapcontrol.js"></script>
     <script src="http://js.leapmotion.com/0.2.1/leap.min.js"></script>
     <script type="text/javascript">
+      var hand, finger;
       var hands = [];
       var fingers = [];
+      var content;
+      var swipeMode = false;
+
+      function init() {
+        $('#content').css('left', -720);
+      }
+
+      var controller = new Leap.Controller({enableGestures: true});
+      controller.on('gesture', function (gesture) {
+        console.log(gesture);
+        if (gesture.type === 'swipe' && gesture.state === 'stop' && gesture.duration > 7000) {
+          if (gesture.direction[0] > 0.5) {
+            // Move Left
+            changePage(gesture, 'left');
+          }
+          if (gesture.direction[0] < -0.5) {
+            // Move Right
+            changePage(gesture, 'right');
+          }
+        }
+      });
+
+      controller.connect();
 
       Leap.loop(function (frame) {
-
+        if (frame.hands.length > 0) {
+          hand = frame.hands[0];
+          finger = hand.fingers[0];
+          console.log(frame.hands[0].fingers.length + ", " + swipeMode);
+          if (frame.hands[0].fingers.length > 1 && frame.hands[0].fingers.length <= 3) {
+            swipeMode = false;
+            
+          }
+          if (frame.hands[0].fingers.length > 3) {
+            swipeMode = true;
+          }
+        }
       });
+
+      function changePage(gesture, direction) {
+        content = $('#content').position();
+        console.log(swipeMode);
+        if (swipeMode) {
+          if (direction === 'left') {
+            console.log("Moving Left");
+            $('#content').css('left', function () {
+              var moveTo = content.left + 350;
+              console.log(moveTo);
+              if (moveTo <= 0) {
+                return moveTo;
+              } else {
+                return content.left;
+              }
+            });
+          }
+          if (direction === 'right') {
+            console.log("Moving Right");
+            $('#content').css('left', function () {
+              var moveTo = content.left - 350;
+              console.log(moveTo);
+              if (moveTo >= -1400) {
+                return moveTo;
+              } else {
+                return content.left;
+              }
+            });
+          }
+        }
+      }
     </script>
   </head>
 
-  <body>
+  <body onload="init()">
     <div id="mainWindow">
       <div id="content">
-      
-        <div class="page" id="home">
-          <span class="clock">
-            8:30
-          </span>
+        
+        <div class="page" id="news">
+          News
+        </div><div class="page" id="navigation">
+          Navigation
+        </div><div class="page" id="home">
+          <div class="clock">
+            8:26
+          </div>
         </div><div class="page" id="messages">
-          Messages
+          <div class="message">
+            <b>Kristen Bailey</b><br>
+            Hey, can you help me find my 
         </div>
         <div class="page" id="email">
-          Messages
+          Email
         </div>
 
       </div> 
       <div id="footer">
-        Footer
+        <div class="footerSection" id="footer_news">
+          News
+        </div><div class="footerSection" id="footer_navigation">
+          Nav
+        </div><div class="footerSection footerSelected" id="footer_home">
+          Home
+        </div><div class="footerSection" id="footer_messages">
+          Msg
+        </div><div class="footerSection" id="footer_email">
+          Mail
+        </div>
       </div>
     </div>
   </body>

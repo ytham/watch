@@ -182,7 +182,7 @@
       var swiping = false;
       var startSwipe = [];
       var endSwipe = [];
-      var swipeThreshold = 90;
+      var swipeThreshold = 60;
 
 
       function init() {
@@ -232,10 +232,10 @@
         if (frame.hands.length > 0) {
           hand = frame.hands[0];
           finger = hand.fingers[0];
-          //console.log(frame.hands[0].fingers.length + ", " + swipeMode);
+          console.log(frame.hands[0].fingers.length + ", " + swipeMode);
           //console.log(frame.hands[0].fingers.length);
           
-          if (frame.hands[0].fingers.length > 0 && frame.hands[0].fingers.length <= 3) {
+          if (frame.hands[0].fingers.length > 0 && frame.hands[0].fingers.length <= 2) {
             swipeMode = false;
             //console.log(finger.tipPosition[1]);
             var contentPosition = $('#content_bottom').position();
@@ -274,7 +274,7 @@
           } else {
             $('#selection').hide();
           }            
-          if (frame.hands[0].fingers.length > 3) {
+          if (frame.hands[0].fingers.length > 2) {
             swipeMode = true;
             //console.log(finger.tipPosition[2]);
 
@@ -473,6 +473,10 @@
             <b>Bill Gates: Control-Alt-Delete was a mistake</b><br>
             If you pressed Control-Alt-Delete to log on before reading this, Bill Gates says he's sorry.
           </div>
+          <div class="section message">
+            <b>Kerfuffle in your fridge waiting to happen</b><br>
+            There's something that the refridgerator companies don't want you to know.  
+          </div>
         </div><div class="page withBorder" id="navigation">
           
         </div><div class="page withBorder" id="home">
@@ -527,6 +531,10 @@
           <div class="section message">
             <b>Kelly Jones</b><br>
             There's always new software updates for my phone, but I can never figure out how to get the...
+          </div>
+          <div class="section message">
+            <b>pikaturtle@gmail.com</b><br>
+            Sometimes I hate it when my food spoils.  Now, I use the FoodSaver PLUS!  FoodSaver PLUS is a revolutionary...
           </div>
           <div class="section message">
             <b>Doreen Grant</b><br>

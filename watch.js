@@ -13,6 +13,7 @@ var fingers = [];
 var board, servo;
 var moveAngle;
 var boardOptions = { port: '/dev/cu.usbmodemfd111' };
+//var boardOptions = { port: '/dev/cu.usbmodemfa131' };
 
 var openAngle = 170;
 var closedAngle = 0;
@@ -46,8 +47,8 @@ io.sockets.on('connection', function (s) {
 // Leap functions
 var controller = new Leap.Controller({enableGestures: true});
 controller.on('gesture', function (gesture) {
-  //console.log(gesture);
-  if (gesture.type === 'swipe' && gesture.state === 'stop' && gesture.duration > 8000) {
+  console.log(gesture);
+  if (gesture.type === 'swipe' && gesture.state === 'stop') { // && gesture.duration > 8000) {
     handleSwipe(gesture);
   }
 });
@@ -66,7 +67,6 @@ Leap.loop(function (frame) {
 
 
 // Johnny-Five
-
 board = new Five.Board(boardOptions);
 board.on('ready', function() {
   servo = new Five.Servo(10);
@@ -79,8 +79,8 @@ board.on('ready', function() {
     if (shouldOpen) {
       moveAngle = openAngle;
       servo.move(moveAngle);
-      shouldOpen = false;
       //socket.emit('start', 'Device is Starting');
+      shouldOpen = false;
     }
     if (shouldClose) {
       moveAngle = closedAngle;
@@ -106,15 +106,17 @@ function detectOpenOrClose(s) {
 }
 
 function handleSwipe(g) {
-  if (g.direction[1] > 0.5 && Math.abs(g.direction[0]) < 0.2 && g.speed > 600 && shouldOpen === false) {
+  console.log(g.direction[1] + " | " + g.direction[0] + " | " + g.speed + " | " + shouldOpen);
+  if (g.direction[1] > 0.5 && Math.abs(g.direction[0]) < 0.2 && g.speed > 200 && shouldOpen === false) {
     shouldOpen = true;
     shouldClose = false;
     console.log("Swipe Up");
     socket.emit('start', 'Device is Starting');
   }
-  if (g.direction[1] < -0.65 && Math.abs(g.direction[0]) < 0.15 && g.speed > 650 && shouldClose === false) {
+  if (g.direction[1] < -0.65 && Math.abs(g.direction[0]) < 0.15 && g.speed > 550 && shouldClose === false) {
     shouldClose = true;
     shouldOpen = false;
+    console.log("Swipe Down");
     socket.emit('end', 'Device is Shutting Down');
   }
 }

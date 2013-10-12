@@ -1,6 +1,8 @@
 var Leap = require('leapjs');
 var hands = [];
 var fingers = [];
+var coordinateQueue = [];
+var firstFrame = true;
 
 var handwriting = new Handwriting();
 
@@ -12,11 +14,18 @@ Leap.loop(function (frame) {
       var fingertip = fingers[0].tipPosition;
       //console.log(fingers[0].tipPosition);
       if (fingertip[2] < 0) {
-        var coord = new Coordinate(fingertip[0], fingertip[1]);
-        handwriting.push(coord);
+        var coord = new WritingCoordinate(fingertip[0], fingertip[1], nil);
+        if (firstFrame) {
+          coordinateQueue.push(coord);
+        } else {
+          if (distance(coordinateQueue[0],coord) > 20) {
+            coordinateQueue.push(coord);
+            // Need to include angle
+          }
       }
       if (fingertip[2] > 0) {
         handwriting.clear();
+        firstFrame = true;
         console.log("Handwriting cleared.");
       }
     }
@@ -40,14 +49,21 @@ Handwriting.prototype.clear = function () {
 }
 
 Handwriting.prototype.read = function () {
+  coordinateStack.reverse();
   for (var i = 0; i < this.coordinateStack.length; i++) {
     //this.coordinateStack.
   }
 }
 
-function Coordinate(x,y) {
+function WritingCoordinate(x,y,angle) {
   this.x = x;
   this.y = y;
+  this.angle = angle;
+}
+
+function distance(a,b) {
+  return Math.sqrt(Math.sq(a.x-b.x) + Math.sq(a.y-b.y));
 }
 
 module.exports = Handwriting;
+module.exports = WritingCoordinate;

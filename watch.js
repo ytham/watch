@@ -67,6 +67,7 @@ Leap.loop(function (frame) {
 
 
 // Johnny-Five
+/*
 board = new Five.Board(boardOptions);
 board.on('ready', function() {
   servo = new Five.Servo(10);
@@ -91,7 +92,7 @@ board.on('ready', function() {
     //detectOpenOrClose(servo);
   });
 });
-
+*/
 function detectOpenOrClose(s) {
   if (moveAngle < 90 && opened === false) {
     moveAngle = openAngle;

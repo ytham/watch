@@ -162,6 +162,17 @@
         opacity: 0.2;
         z-index: 95;
       }
+
+      #selectOverlay {
+        display: inline-block;
+        position: absolute;
+        top: 0px;
+        width: 100%
+        height: 5px;
+        opacity: 0.5;
+        background-color: #00FF00;
+        z-index: 99;
+      }
     </style>
 
     <script src="/socket.io/socket.io.js"></script>
@@ -234,6 +245,7 @@
           finger = hand.fingers[0];
           console.log(frame.hands[0].fingers.length + ", " + swipeMode);
           //console.log(frame.hands[0].fingers.length);
+          $('#selectOverlay').show();
           
           if (frame.hands[0].fingers.length > 0 && frame.hands[0].fingers.length <= 2) {
             swipeMode = false;
@@ -316,6 +328,7 @@
           swiping = false;
           startSwipe = [];
           $('#selection').hide();
+          $('#selectOverlay').hide();
         }
       });
 
@@ -427,6 +440,8 @@
       </div>
 
       <div id="selection"> </div>
+
+      <div id="selectOverlay"> </div>
 
       <div class="content" id="content_top">
         <div class="page withBorder" id="news_above">
